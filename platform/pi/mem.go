@@ -50,7 +50,3 @@ func (t *Temp) GetMemStats() *interfaces.MemStat {
 
 	return &memStat
 }
-git remote set-url origin https://github.com/myusername/myrepo.git
-
-git@github.com:jason-costello/pitop
-git@github.com:PierreKieffer/pitop.git

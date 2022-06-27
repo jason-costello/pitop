@@ -1,64 +1,65 @@
 package worker
 
 import (
-	"github.com/PierreKieffer/pitop/pkg/cpu"
-	"github.com/PierreKieffer/pitop/pkg/disk"
-	"github.com/PierreKieffer/pitop/pkg/mem"
-	"github.com/PierreKieffer/pitop/pkg/net"
-	"github.com/PierreKieffer/pitop/pkg/temp"
 	"sync"
+
+	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/platform/pi"
 )
 
 type Status struct {
-	CPULoad *cpu.CPULoad
-	CPUFreq *cpu.CPUFreq
-	Mem     *mem.MemStat
-	Temp    *temp.Temp
-	Disk    *[]disk.DiskInfo
-	Net     *net.NetStat
+	CPULoad *interfaces.CPULoad
+	CPUFreq *interfaces.CPUFreq
+	Mem     *interfaces.MemStat
+	Temp    *float64
+	Disk    *[]interfaces.DiskInfo
+	Net     *interfaces.NetStat
 }
 
 func Worker() *Status {
 
 	var status Status
 
+	var tempr pi.Temp
+
 	var wg sync.WaitGroup
 	wg.Add(6)
 
-	//CPU Load
+	// CPU Load
 	go func() {
 		defer wg.Done()
-		status.CPULoad = cpu.ComputeCPULoad()
+		status.CPULoad = tempr.ComputeCPULoad()
 	}()
 
 	// CPU Frequency
 	go func() {
 		defer wg.Done()
-		status.CPUFreq = cpu.ExtractCPUFrequency()
+		status.CPUFreq = tempr.ExtractCPUFrequency()
 	}()
 
-	//Mem Stats
+	// Mem Stats
 	go func() {
 		defer wg.Done()
-		status.Mem = mem.GetMemStats()
+		status.Mem = tempr.GetMemStats()
 	}()
 
 	// Temp
 	go func() {
 		defer wg.Done()
-		status.Temp = temp.ExtractTemp()
+		status.Temp = tempr.ExtractTemp()
+		// status.Temp = temp.ExtractTemp()
 	}()
 
 	// Disk
 	go func() {
 		defer wg.Done()
-		status.Disk = disk.ExtractDiskUsage()
+		status.Disk = tempr.ExtractDiskUsage()
 	}()
 
 	// Net
 	go func() {
 		defer wg.Done()
-		status.Net = net.ComputeNetStats()
+		status.Net = tempr.ComputeNetStats()
 	}()
 	wg.Wait()
 

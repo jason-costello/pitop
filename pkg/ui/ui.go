@@ -1,13 +1,13 @@
 package ui
 
 import (
+	"fmt"
 	"log"
 	"time"
 
-	"fmt"
-	"github.com/PierreKieffer/pitop/pkg/disk"
+	"github.com/PierreKieffer/pitop/interfaces"
 	"github.com/PierreKieffer/pitop/pkg/worker"
-	termui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3"
 	"github.com/gizak/termui/v3/widgets"
 )
 
@@ -18,12 +18,12 @@ func App() {
 	}
 	defer termui.Close()
 
-	//Init
+	// Init
 	fmt.Println("")
 	fmt.Println("    Loading ...    ")
 	status := worker.Worker()
 
-	//CPU Load
+	// CPU Load
 	g1 := widgets.NewGauge()
 	g1.Title = " CPU0 "
 	g1.Percent = int(status.CPULoad.CPU0)
@@ -79,8 +79,8 @@ func App() {
 	tableMem.TextStyle = termui.Theme.Table.Text
 	tableMem.TextAlignment = termui.AlignCenter
 	tableMem.Rows = [][]string{
-		[]string{"Used", "Free", "Total"},
-		[]string{fmt.Sprintf("%.2f Gb", (float32(status.Mem.MemTotal)-float32(status.Mem.MemFree))/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemFree)/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemTotal)/1000000)},
+		{"Used", "Free", "Total"},
+		{fmt.Sprintf("%.2f Gb", (float32(status.Mem.MemTotal)-float32(status.Mem.MemFree))/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemFree)/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemTotal)/1000000)},
 	}
 	tableMem.TextStyle = termui.NewStyle(termui.ColorWhite)
 	tableMem.SetRect(50, 6, 100, 10)
@@ -108,7 +108,7 @@ func App() {
 
 	// Temperature
 	var tempBuffer = make([]float64, 40)
-	tempBuffer[len(tempBuffer)-1] = float64(status.Temp.T)
+	tempBuffer[len(tempBuffer)-1] = *status.Temp
 
 	tempPlot := widgets.NewPlot()
 	tempPlot.Title = " Temperature °C "
@@ -159,8 +159,8 @@ func App() {
 		gSwapUsage.BarColor = GetColorPercent(status.Mem.SwapUsage)
 
 		tableMem.Rows = [][]string{
-			[]string{"Used", "Free", "Total"},
-			[]string{fmt.Sprintf("%.2f Gb", (float32(status.Mem.MemTotal)-float32(status.Mem.MemFree))/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemFree)/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemTotal)/1000000)},
+			{"Used", "Free", "Total"},
+			{fmt.Sprintf("%.2f Gb", (float32(status.Mem.MemTotal)-float32(status.Mem.MemFree))/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemFree)/1000000), fmt.Sprintf("%.2f Gb", float32(status.Mem.MemTotal)/1000000)},
 		}
 
 		freqBuffer = UpdateBuffer(freqBuffer, float64(status.CPUFreq.Freq)/1000)
@@ -168,7 +168,7 @@ func App() {
 
 		tableDisk.Rows = BuildTableDisk(status.Disk)
 
-		tempBuffer = UpdateBuffer(tempBuffer, float64(status.Temp.T))
+		tempBuffer = UpdateBuffer(tempBuffer, *status.Temp)
 		tempPlot.Data = [][]float64{tempBuffer}
 
 		netRxBuffer = UpdateBuffer(netRxBuffer, float64(status.Net.BytesRecv))
@@ -205,7 +205,7 @@ func UpdateBuffer(inputBuffer []float64, inputValue float64) []float64 {
 	return updateBuffer
 }
 
-func BuildTableDisk(disks *[]disk.DiskInfo) [][]string {
+func BuildTableDisk(disks *[]interfaces.DiskInfo) [][]string {
 	var diskRows [][]string
 	header := []string{"Mount", "Size", "Used", "Free", "Usage"}
 	diskRows = append(diskRows, header)

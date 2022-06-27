@@ -1,6 +1,5 @@
 package interfaces
 
-type CPU struct{}
 type CPUCollector interface {
 	ComputeCPULoad() *CPULoad
 	GetCoresStats() *CPUStat

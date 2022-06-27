@@ -1,25 +1,20 @@
-package net
+package pi
 
 import (
 	"fmt"
-	"github.com/PierreKieffer/pitop/pkg/utils"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-type NetStat struct {
-	BytesRecv      uint64
-	BytesSent      uint64
-	TotalBytesRecv uint64
-	TotalBytesSent uint64
-}
+func (t *Temp) GetNetStats() *interfaces.NetStat {
 
-func GetNetStats() *NetStat {
-
-	var netStats []NetStat
+	var netStats []interfaces.NetStat
 
 	netStatBytes, err := ioutil.ReadFile("/proc/net/dev")
 	if err != nil {
@@ -31,10 +26,10 @@ func GetNetStats() *NetStat {
 
 	for _, statLine := range dataSlice[2:] {
 		statSlice := utils.FormatStatSlice(strings.Split(statLine, " "))
-		ExtractNetStats(&netStats, statSlice)
+		extractNetStats(&netStats, statSlice)
 	}
 
-	var totalNetStat NetStat
+	var totalNetStat interfaces.NetStat
 
 	for _, netStat := range netStats {
 		totalNetStat.TotalBytesRecv += netStat.TotalBytesRecv
@@ -45,9 +40,9 @@ func GetNetStats() *NetStat {
 	return &totalNetStat
 }
 
-func ExtractNetStats(netStats *[]NetStat, statSlice []string) {
+func extractNetStats(netStats *[]interfaces.NetStat, statSlice []string) {
 	if len(statSlice) > 1 && statSlice[0] != "" {
-		var netStat NetStat
+		var netStat interfaces.NetStat
 		netStat.TotalBytesRecv, _ = strconv.ParseUint(statSlice[1], 10, 64)
 		netStat.TotalBytesSent, _ = strconv.ParseUint(statSlice[9], 10, 64)
 
@@ -55,10 +50,10 @@ func ExtractNetStats(netStats *[]NetStat, statSlice []string) {
 	}
 }
 
-func ComputeNetStats() *NetStat {
-	prevNetStats := GetNetStats()
+func (t *Temp) ComputeNetStats() *interfaces.NetStat {
+	prevNetStats := t.GetNetStats()
 	time.Sleep(time.Second)
-	netStats := GetNetStats()
+	netStats := t.GetNetStats()
 
 	if prevNetStats.TotalBytesRecv == 0 && prevNetStats.TotalBytesSent == 0 {
 		netStats.BytesRecv = 0
