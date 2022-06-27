@@ -6,13 +6,13 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/disk"
 	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-func (t *Temp) ExtractDiskUsage() *[]interfaces.DiskInfo {
+func (t *Temp) ExtractDiskUsage() *[]disk.DiskInfo {
 
-	var disks []interfaces.DiskInfo
+	var disks []disk.DiskInfo
 
 	cmd := "df -h"
 	run := exec.Command("bash", "-c", cmd)
@@ -30,7 +30,7 @@ func (t *Temp) ExtractDiskUsage() *[]interfaces.DiskInfo {
 		if len(diskInfoSlice) > 0 {
 			if diskInfoSlice[0][:4] == "/dev" && diskInfoSlice[0][:9] != "/dev/loop" {
 
-				var diskInfo interfaces.DiskInfo
+				var diskInfo disk.DiskInfo
 
 				diskInfo.MountingPoint = diskInfoSlice[len(diskInfoSlice)-1]
 				diskInfo.Size = diskInfoSlice[1]

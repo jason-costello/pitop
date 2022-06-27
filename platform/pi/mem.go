@@ -7,13 +7,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/mem"
 	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-func (t *Temp) GetMemStats() *interfaces.MemStat {
+func (t *Temp) ExtractMemStats() *mem.MemStat {
 
-	var memStat interfaces.MemStat
+	var memStat mem.MemStat
 
 	memStatBytes, err := ioutil.ReadFile("/proc/meminfo")
 	if err != nil {

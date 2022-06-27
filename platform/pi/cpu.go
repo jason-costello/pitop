@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/cpu"
 	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-func (t *Temp) ComputeCPULoad() *interfaces.CPULoad {
+func (t *Temp) ComputeCPULoad() *cpu.CPULoad {
 
 	// Extract stats
 	prevExtract := t.GetCoresStats()
@@ -22,7 +22,7 @@ func (t *Temp) ComputeCPULoad() *interfaces.CPULoad {
 	extract := t.GetCoresStats()
 
 	// Compute Usage
-	var cpuLoad interfaces.CPULoad
+	var cpuLoad cpu.CPULoad
 
 	var wg sync.WaitGroup
 	wg.Add(5)
@@ -62,12 +62,12 @@ func (t *Temp) ComputeCPULoad() *interfaces.CPULoad {
 
 }
 
-func (t *Temp) GetCoresStats() *interfaces.CPUStat {
+func (t *Temp) GetCoresStats() *cpu.CPUStat {
 	/*
 		Method to parse /proc/stat file and extract each stats for each core
 	*/
 
-	var cpuStat interfaces.CPUStat
+	var cpuStat cpu.CPUStat
 
 	procStatBytes, err := ioutil.ReadFile("/proc/stat")
 	if err != nil {
@@ -82,7 +82,7 @@ func (t *Temp) GetCoresStats() *interfaces.CPUStat {
 
 		if len(statSlice) > 0 {
 			if statSlice[0] != "" && statSlice[0][:3] == "cpu" {
-				var coreStat interfaces.CoreStat
+				var coreStat cpu.CoreStat
 				coreStat.CoreId = statSlice[0]
 				coreStat.User, _ = strconv.ParseUint(statSlice[1], 10, 64)
 				coreStat.Nice, _ = strconv.ParseUint(statSlice[2], 10, 64)
@@ -114,7 +114,7 @@ func (t *Temp) GetCoresStats() *interfaces.CPUStat {
 	return &cpuStat
 }
 
-func computeCoreLoad(currentStat, previousStat *interfaces.CoreStat) float32 {
+func computeCoreLoad(currentStat, previousStat *cpu.CoreStat) float32 {
 
 	/*
 	   user    nice   system  idle      iowait irq   softirq  steal  guest  guest_nice
@@ -147,12 +147,12 @@ func computeCoreLoad(currentStat, previousStat *interfaces.CoreStat) float32 {
 	return CPULoadPercentage
 }
 
-func (t *Temp) ExtractCPUFrequency() *interfaces.CPUFreq {
+func (t *Temp) ExtractCPUFrequency() cpu.CPUFreq {
 	/*
 		cat /proc/cpuinfo | grep "MHz"
 	*/
 
-	var cpuFreq interfaces.CPUFreq
+	var cpuFreq cpu.CPUFreq
 	cpuInfoBytes, err := ioutil.ReadFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
 	if err != nil {
 		fmt.Println(err)
@@ -161,7 +161,7 @@ func (t *Temp) ExtractCPUFrequency() *interfaces.CPUFreq {
 
 	freq, _ := strconv.ParseUint(strings.Split(string(cpuInfoBytes), "\n")[0], 10, 64)
 	cpuFreq.Freq = freq / 1000
-	return &cpuFreq
+	return cpuFreq
 }
 
 func ExtractCPUInfoFrequency() {

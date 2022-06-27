@@ -8,13 +8,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/net"
 	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-func (t *Temp) GetNetStats() *interfaces.NetStat {
+func (t *Temp) GetNetStats() *net.NetStat {
 
-	var netStats []interfaces.NetStat
+	var netStats []net.NetStat
 
 	netStatBytes, err := ioutil.ReadFile("/proc/net/dev")
 	if err != nil {
@@ -29,7 +29,7 @@ func (t *Temp) GetNetStats() *interfaces.NetStat {
 		extractNetStats(&netStats, statSlice)
 	}
 
-	var totalNetStat interfaces.NetStat
+	var totalNetStat net.NetStat
 
 	for _, netStat := range netStats {
 		totalNetStat.TotalBytesRecv += netStat.TotalBytesRecv
@@ -40,9 +40,9 @@ func (t *Temp) GetNetStats() *interfaces.NetStat {
 	return &totalNetStat
 }
 
-func extractNetStats(netStats *[]interfaces.NetStat, statSlice []string) {
+func extractNetStats(netStats *[]net.NetStat, statSlice []string) {
 	if len(statSlice) > 1 && statSlice[0] != "" {
-		var netStat interfaces.NetStat
+		var netStat net.NetStat
 		netStat.TotalBytesRecv, _ = strconv.ParseUint(statSlice[1], 10, 64)
 		netStat.TotalBytesSent, _ = strconv.ParseUint(statSlice[9], 10, 64)
 
@@ -50,7 +50,7 @@ func extractNetStats(netStats *[]interfaces.NetStat, statSlice []string) {
 	}
 }
 
-func (t *Temp) ComputeNetStats() *interfaces.NetStat {
+func (t *Temp) ComputeNetStats() *net.NetStat {
 	prevNetStats := t.GetNetStats()
 	time.Sleep(time.Second)
 	netStats := t.GetNetStats()

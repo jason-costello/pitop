@@ -1,7 +1,7 @@
 package interfaces
 
-type Temp struct{}
+//go:generate go run --mod=mod github.com/golang/mock/mockgen --source=./temp.go --destination=../mocks/temp.go --package=mocks
 
-type Temperature interface {
-	ExtractTemp() *float64
+type TempCollector interface {
+	ExtractTemp() float64
 }

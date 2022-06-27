@@ -1,12 +1,11 @@
 package interfaces
 
-type NetStat struct {
-	BytesRecv      uint64
-	BytesSent      uint64
-	TotalBytesRecv uint64
-	TotalBytesSent uint64
-}
+import (
+	"github.com/PierreKieffer/pitop/net"
+)
 
-type NetInfo interface {
-	ComputeNetStats() *NetStat
+//go:generate go run --mod=mod github.com/golang/mock/mockgen --source=./net.go --destination=../mocks/net.go --package=mocks
+
+type NetCollector interface {
+	ComputeNetStats() net.NetStat
 }
