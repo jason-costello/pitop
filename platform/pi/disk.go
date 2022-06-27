@@ -1,24 +1,18 @@
-package disk
+package pi
 
 import (
 	"fmt"
-	"github.com/PierreKieffer/pitop/pkg/utils"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-type DiskInfo struct {
-	MountingPoint string
-	Size          string
-	Used          string
-	Avail         string
-	PercentUse    string
-}
+func (t *Temp) ExtractDiskUsage() *[]interfaces.DiskInfo {
 
-func ExtractDiskUsage() *[]DiskInfo {
-
-	var disks []DiskInfo
+	var disks []interfaces.DiskInfo
 
 	cmd := "df -h"
 	run := exec.Command("bash", "-c", cmd)
@@ -36,7 +30,7 @@ func ExtractDiskUsage() *[]DiskInfo {
 		if len(diskInfoSlice) > 0 {
 			if diskInfoSlice[0][:4] == "/dev" && diskInfoSlice[0][:9] != "/dev/loop" {
 
-				var diskInfo DiskInfo
+				var diskInfo interfaces.DiskInfo
 
 				diskInfo.MountingPoint = diskInfoSlice[len(diskInfoSlice)-1]
 				diskInfo.Size = diskInfoSlice[1]

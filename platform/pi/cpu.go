@@ -1,8 +1,7 @@
-package cpu
+package pi
 
 import (
 	"fmt"
-	"github.com/PierreKieffer/pitop/pkg/utils"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -10,51 +9,20 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/PierreKieffer/pitop/interfaces"
+	"github.com/PierreKieffer/pitop/pkg/utils"
 )
 
-type CoreStat struct {
-	CoreId    string
-	User      uint64
-	Nice      uint64
-	System    uint64
-	Idle      uint64
-	IOWait    uint64
-	IRQ       uint64
-	SoftIRQ   uint64
-	Steal     uint64
-	Guest     uint64
-	GuestNice uint64
-}
-
-type CPUStat struct {
-	cpu  *CoreStat // total
-	cpu0 *CoreStat
-	cpu1 *CoreStat
-	cpu2 *CoreStat
-	cpu3 *CoreStat
-}
-
-type CPULoad struct {
-	CPU  float32 // total %
-	CPU0 float32
-	CPU1 float32
-	CPU2 float32
-	CPU3 float32
-}
-
-type CPUFreq struct {
-	Freq uint64
-}
-
-func ComputeCPULoad() *CPULoad {
+func (t *Temp) ComputeCPULoad() *interfaces.CPULoad {
 
 	// Extract stats
-	prevExtract := GetCoresStats()
+	prevExtract := t.GetCoresStats()
 	time.Sleep(time.Second)
-	extract := GetCoresStats()
+	extract := t.GetCoresStats()
 
 	// Compute Usage
-	var cpuLoad CPULoad
+	var cpuLoad interfaces.CPULoad
 
 	var wg sync.WaitGroup
 	wg.Add(5)
@@ -62,31 +30,31 @@ func ComputeCPULoad() *CPULoad {
 	// cpu
 	go func() {
 		defer wg.Done()
-		cpuLoad.CPU = ComputeCoreLoad(extract.cpu, prevExtract.cpu)
+		cpuLoad.CPU = computeCoreLoad(extract.CPU, prevExtract.CPU)
 	}()
 
 	// cpu0
 	go func() {
 		defer wg.Done()
-		cpuLoad.CPU0 = ComputeCoreLoad(extract.cpu0, prevExtract.cpu0)
+		cpuLoad.CPU0 = computeCoreLoad(extract.CPU0, prevExtract.CPU0)
 	}()
 
 	// cpu1
 	go func() {
 		defer wg.Done()
-		cpuLoad.CPU1 = ComputeCoreLoad(extract.cpu1, prevExtract.cpu1)
+		cpuLoad.CPU1 = computeCoreLoad(extract.CPU1, prevExtract.CPU1)
 	}()
 
 	// cpu2
 	go func() {
 		defer wg.Done()
-		cpuLoad.CPU2 = ComputeCoreLoad(extract.cpu2, prevExtract.cpu2)
+		cpuLoad.CPU2 = computeCoreLoad(extract.CPU2, prevExtract.CPU2)
 	}()
 
 	// cpu3
 	go func() {
 		defer wg.Done()
-		cpuLoad.CPU3 = ComputeCoreLoad(extract.cpu3, prevExtract.cpu3)
+		cpuLoad.CPU3 = computeCoreLoad(extract.CPU3, prevExtract.CPU3)
 	}()
 	wg.Wait()
 
@@ -94,12 +62,12 @@ func ComputeCPULoad() *CPULoad {
 
 }
 
-func GetCoresStats() *CPUStat {
+func (t *Temp) GetCoresStats() *interfaces.CPUStat {
 	/*
 		Method to parse /proc/stat file and extract each stats for each core
 	*/
 
-	var cpuStat CPUStat
+	var cpuStat interfaces.CPUStat
 
 	procStatBytes, err := ioutil.ReadFile("/proc/stat")
 	if err != nil {
@@ -114,7 +82,7 @@ func GetCoresStats() *CPUStat {
 
 		if len(statSlice) > 0 {
 			if statSlice[0] != "" && statSlice[0][:3] == "cpu" {
-				var coreStat CoreStat
+				var coreStat interfaces.CoreStat
 				coreStat.CoreId = statSlice[0]
 				coreStat.User, _ = strconv.ParseUint(statSlice[1], 10, 64)
 				coreStat.Nice, _ = strconv.ParseUint(statSlice[2], 10, 64)
@@ -129,15 +97,15 @@ func GetCoresStats() *CPUStat {
 
 				switch statSlice[0] {
 				case "cpu":
-					cpuStat.cpu = &coreStat
+					cpuStat.CPU = &coreStat
 				case "cpu0":
-					cpuStat.cpu0 = &coreStat
+					cpuStat.CPU0 = &coreStat
 				case "cpu1":
-					cpuStat.cpu1 = &coreStat
+					cpuStat.CPU1 = &coreStat
 				case "cpu2":
-					cpuStat.cpu2 = &coreStat
+					cpuStat.CPU2 = &coreStat
 				case "cpu3":
-					cpuStat.cpu3 = &coreStat
+					cpuStat.CPU3 = &coreStat
 				}
 
 			}
@@ -146,7 +114,7 @@ func GetCoresStats() *CPUStat {
 	return &cpuStat
 }
 
-func ComputeCoreLoad(currentStat, previousStat *CoreStat) float32 {
+func computeCoreLoad(currentStat, previousStat *interfaces.CoreStat) float32 {
 
 	/*
 	   user    nice   system  idle      iowait irq   softirq  steal  guest  guest_nice
@@ -179,12 +147,12 @@ func ComputeCoreLoad(currentStat, previousStat *CoreStat) float32 {
 	return CPULoadPercentage
 }
 
-func ExtractCPUFrequency() *CPUFreq {
+func (t *Temp) ExtractCPUFrequency() *interfaces.CPUFreq {
 	/*
 		cat /proc/cpuinfo | grep "MHz"
 	*/
 
-	var cpuFreq CPUFreq
+	var cpuFreq interfaces.CPUFreq
 	cpuInfoBytes, err := ioutil.ReadFile("/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq")
 	if err != nil {
 		fmt.Println(err)
@@ -211,7 +179,7 @@ func ExtractCPUInfoFrequency() {
 	for _, infoLine := range dataSlice {
 		info := utils.FormatStatSlice(strings.Split(infoLine, " "))
 
-		if len(info) > 1 && info[0] != "" && info[0] == "cpu" && info[1][:3] == "MHz" {
+		if len(info) > 1 && info[0] == "cpu" && info[1][:3] == "MHz" {
 			fmt.Println(info[2])
 		}
 	}

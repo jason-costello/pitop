@@ -1,4 +1,4 @@
-package temp
+package pi
 
 import (
 	"fmt"
@@ -8,22 +8,17 @@ import (
 	"strings"
 )
 
-type Temp struct {
-	T float32
-}
+type Temp struct{}
 
-func ExtractTemp() *Temp {
-	var temp Temp
-
+func (t *Temp) ExtractTemp() *float64 {
 	tempBytes, err := ioutil.ReadFile("/sys/class/thermal/thermal_zone0/temp")
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-
 	tempInfo, _ := strconv.ParseUint(strings.Split(string(tempBytes), "\n")[0], 10, 64)
 
-	temp.T = float32(tempInfo) / 1000
+	rt := float64(tempInfo) / 1000
 
-	return &temp
+	return &rt
 }
